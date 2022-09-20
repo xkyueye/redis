@@ -73,17 +73,34 @@ struct __attribute__ ((__packed__)) sdshdr64 {
     char buf[];
 };
 
+// TODO 内存布局
+/*
+  | 结构体信息域 | 数据域
+*/
+
+/*数据域首地址向前一个字节存放类型+长度信息，低3位存放类型
+对于sdshdr5：高5位存放长度
+其他：高5位无意义
+*/
+
+
+
 #define SDS_TYPE_5  0
 #define SDS_TYPE_8  1
 #define SDS_TYPE_16 2
 #define SDS_TYPE_32 3
 #define SDS_TYPE_64 4
-#define SDS_TYPE_MASK 7
+#define SDS_TYPE_MASK 7 // 0111
 #define SDS_TYPE_BITS 3
+
+// TODO 获取存储结构体信息的起始地址（s指向的是数据起始地址）
 #define SDS_HDR_VAR(T,s) struct sdshdr##T *sh = (void*)((s)-(sizeof(struct sdshdr##T)));
 #define SDS_HDR(T,s) ((struct sdshdr##T *)((s)-(sizeof(struct sdshdr##T))))
+
+// TODO 获取sdshdr5的长度
 #define SDS_TYPE_5_LEN(f) ((f)>>SDS_TYPE_BITS)
 
+// TODO sds：获取数据长度
 static inline size_t sdslen(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -101,6 +118,7 @@ static inline size_t sdslen(const sds s) {
     return 0;
 }
 
+// TODO sds：获取剩余可用长度
 static inline size_t sdsavail(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -127,11 +145,13 @@ static inline size_t sdsavail(const sds s) {
     return 0;
 }
 
+// TODO sds：更新数据长度
 static inline void sdssetlen(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
         case SDS_TYPE_5:
             {
+                // TODO 获取flags的地址
                 unsigned char *fp = ((unsigned char*)s)-1;
                 *fp = SDS_TYPE_5 | (newlen << SDS_TYPE_BITS);
             }
@@ -151,6 +171,7 @@ static inline void sdssetlen(sds s, size_t newlen) {
     }
 }
 
+// TODO sds：增加数据长度
 static inline void sdsinclen(sds s, size_t inc) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -176,6 +197,7 @@ static inline void sdsinclen(sds s, size_t inc) {
     }
 }
 
+// TODO sds：申请的空间长度
 /* sdsalloc() = sdsavail() + sdslen() */
 static inline size_t sdsalloc(const sds s) {
     unsigned char flags = s[-1];
@@ -194,6 +216,7 @@ static inline size_t sdsalloc(const sds s) {
     return 0;
 }
 
+// TODO sds：更新申请的空间长度
 static inline void sdssetalloc(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
