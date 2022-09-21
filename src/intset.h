@@ -32,10 +32,14 @@
 #define __INTSET_H
 #include <stdint.h>
 
+/* 整数集合：底层使用数组存储元素，集合中的元素按照从小到大排列
+* 插入、删除时需要移动元素，在元素较多时性能不佳，所以只有在元素个数较少时才使用整数集合
+* 根据存储值的大小选择合适的编码方式以节约内存
+* */
 typedef struct intset {
-    uint32_t encoding;
-    uint32_t length;
-    int8_t contents[];
+    uint32_t encoding; // 编码方式。不同范围的值使用不同的类型存储（int16_t, int32_t, int64_t）
+    uint32_t length; // 长度
+    int8_t contents[]; // 柔性数组
 } intset;
 
 intset *intsetNew(void);
