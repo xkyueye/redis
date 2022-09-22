@@ -41,6 +41,9 @@ extern const char *SDS_NOINIT;
 #include <stdint.h>
 
 typedef char *sds;
+// 简单动态字符串
+// 不同长度的字符串使用不同的数据类型表示长度和申请的空间信息
+// sdshdr5直接使用flags字段表示长度
 
 /* Note: sdshdr5 is never used, we just access the flags byte directly.
  * However is here to document the layout of type 5 SDS strings. */
@@ -78,12 +81,17 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 #define SDS_TYPE_16 2
 #define SDS_TYPE_32 3
 #define SDS_TYPE_64 4
-#define SDS_TYPE_MASK 7
-#define SDS_TYPE_BITS 3
+#define SDS_TYPE_MASK 7 // 类型掩码
+#define SDS_TYPE_BITS 3 // 表示类型使用的字节数
+
+// “s”为柔性数组的首地址，通过“s”和类型“T”获取sds的首地址
 #define SDS_HDR_VAR(T,s) struct sdshdr##T *sh = (void*)((s)-(sizeof(struct sdshdr##T)));
 #define SDS_HDR(T,s) ((struct sdshdr##T *)((s)-(sizeof(struct sdshdr##T))))
+
+// 解析flags里存储的sdshdr5的长度信息
 #define SDS_TYPE_5_LEN(f) ((f)>>SDS_TYPE_BITS)
 
+// 获取长度
 static inline size_t sdslen(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -101,11 +109,12 @@ static inline size_t sdslen(const sds s) {
     return 0;
 }
 
+// 获取剩余可用空间大小
 static inline size_t sdsavail(const sds s) {
-    unsigned char flags = s[-1];
+    unsigned char flags = s[-1]; // “s”向前移动一个字节即为flags存储位置，使用数组下标的方式获取flags的值
     switch(flags&SDS_TYPE_MASK) {
         case SDS_TYPE_5: {
-            return 0;
+            return 0; // sdshdr5不做实际存储
         }
         case SDS_TYPE_8: {
             SDS_HDR_VAR(8,s);
@@ -127,12 +136,13 @@ static inline size_t sdsavail(const sds s) {
     return 0;
 }
 
+// 更新长度
 static inline void sdssetlen(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
         case SDS_TYPE_5:
             {
-                unsigned char *fp = ((unsigned char*)s)-1;
+                unsigned char *fp = ((unsigned char*)s)-1; // 向前移动一个字节得到flags的地址
                 *fp = SDS_TYPE_5 | (newlen << SDS_TYPE_BITS);
             }
             break;
@@ -151,6 +161,7 @@ static inline void sdssetlen(sds s, size_t newlen) {
     }
 }
 
+// 增加长度
 static inline void sdsinclen(sds s, size_t inc) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -177,6 +188,7 @@ static inline void sdsinclen(sds s, size_t inc) {
 }
 
 /* sdsalloc() = sdsavail() + sdslen() */
+// 当前分配的空间大小
 static inline size_t sdsalloc(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -194,6 +206,7 @@ static inline size_t sdsalloc(const sds s) {
     return 0;
 }
 
+// 更新分配的空间大小
 static inline void sdssetalloc(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -253,6 +266,7 @@ sds sdsjoin(char **argv, int argc, char *sep);
 sds sdsjoinsds(sds *argv, int argc, const char *sep, size_t seplen);
 
 /* Low level functions exposed to the user API */
+
 sds sdsMakeRoomFor(sds s, size_t addlen);
 void sdsIncrLen(sds s, ssize_t incr);
 sds sdsRemoveFreeSpace(sds s);
