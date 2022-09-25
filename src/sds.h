@@ -52,8 +52,8 @@ struct __attribute__ ((__packed__)) sdshdr5 {
     char buf[];
 };
 struct __attribute__ ((__packed__)) sdshdr8 {
-    uint8_t len; /* used */
-    uint8_t alloc; /* excluding the header and null terminator */
+    uint8_t len; /* used */ // 柔性数组里面的内容长度（不包括末尾的结束符）
+    uint8_t alloc; /* excluding the header and null terminator */  //（不包括末尾的结束符）
     unsigned char flags; /* 3 lsb of type, 5 unused bits */
     char buf[];
 };
