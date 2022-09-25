@@ -31,6 +31,8 @@
 #ifndef __ADLIST_H__
 #define __ADLIST_H__
 
+// 双向链表
+
 /* Node, List, and Iterator are the only data structures used currently. */
 
 typedef struct listNode {
@@ -47,9 +49,9 @@ typedef struct listIter {
 typedef struct list {
     listNode *head;
     listNode *tail;
-    void *(*dup)(void *ptr);
-    void (*free)(void *ptr);
-    int (*match)(void *ptr, void *key);
+    void *(*dup)(void *ptr); // 复制节点值的方法
+    void (*free)(void *ptr); // 释放节点值的方法
+    int (*match)(void *ptr, void *key); // 比较元素值的方法
     unsigned long len;
 } list;
 
