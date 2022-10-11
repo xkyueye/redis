@@ -379,6 +379,11 @@ zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range) {
  * Min and max are inclusive, so a score >= min || score <= max is deleted.
  * Note that this function takes the reference to the hash table view of the
  * sorted set, in order to remove the elements from the hash table too. */
+// 删除指定分值范围内的节点
+// @param zsl：跳表首地址
+// @param range：指定分值范围
+// @param dict：存储内容的字典
+// @return 删除的节点数
 unsigned long zslDeleteRangeByScore(zskiplist *zsl, zrangespec *range, dict *dict) {
     zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
     unsigned long removed = 0;
@@ -410,6 +415,11 @@ unsigned long zslDeleteRangeByScore(zskiplist *zsl, zrangespec *range, dict *dic
     return removed;
 }
 
+// 删除指定内容(ele)范围内的节点
+// @param zsl：跳表首地址
+// @param range：指定内容(ele)范围
+// @param dict：存储内容的字典
+// @return 删除的节点数
 unsigned long zslDeleteRangeByLex(zskiplist *zsl, zlexrangespec *range, dict *dict) {
     zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
     unsigned long removed = 0;
@@ -441,6 +451,10 @@ unsigned long zslDeleteRangeByLex(zskiplist *zsl, zlexrangespec *range, dict *di
 
 /* Delete all the elements with rank between start and end from the skiplist.
  * Start and end are inclusive. Note that start and end need to be 1-based */
+// 删除指定排序（下标，从1开始）范围内的节点
+// @param zsl：跳表首地址
+// @param start：范围下限
+// @param end：范围上限
 unsigned long zslDeleteRangeByRank(zskiplist *zsl, unsigned int start, unsigned int end, dict *dict) {
     zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
     unsigned long traversed = 0, removed = 0;
@@ -473,6 +487,11 @@ unsigned long zslDeleteRangeByRank(zskiplist *zsl, unsigned int start, unsigned 
  * Returns 0 when the element cannot be found, rank otherwise.
  * Note that the rank is 1-based due to the span of zsl->header to the
  * first element. */
+// 获取指定分值和内容的节点的排序（下标）
+// @param zsl：跳表首地址
+// @param score：指定节点的分值
+// @param ele：指定节点的内容
+// @return 指定节点跳表中的排序（下标），没找到指定节点时返回0
 unsigned long zslGetRank(zskiplist *zsl, double score, sds ele) {
     zskiplistNode *x;
     unsigned long rank = 0;
@@ -497,6 +516,10 @@ unsigned long zslGetRank(zskiplist *zsl, double score, sds ele) {
 }
 
 /* Finds an element by its rank. The rank argument needs to be 1-based. */
+// 获取指定排序的节点
+// @param zsl：跳表首地址
+// @param rank：排序值
+// @return 存在则返回指定节点，否则返回NULL
 zskiplistNode* zslGetElementByRank(zskiplist *zsl, unsigned long rank) {
     zskiplistNode *x;
     unsigned long traversed = 0;
