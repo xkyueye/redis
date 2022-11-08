@@ -44,57 +44,69 @@
 /* Unused arguments generate annoying warnings... */
 #define DICT_NOTUSED(V) ((void) V)
 
+// hash表的元素
 typedef struct dictEntry {
-    void *key;
+    void *key; // key
     union {
         void *val;
         uint64_t u64;
         int64_t s64;
         double d;
-    } v;
-    struct dictEntry *next;
+    } v; // value
+    struct dictEntry *next; // 桶里的下一元素
 } dictEntry;
 
 typedef struct dictType {
-    uint64_t (*hashFunction)(const void *key);
-    void *(*keyDup)(void *privdata, const void *key);
-    void *(*valDup)(void *privdata, const void *obj);
-    int (*keyCompare)(void *privdata, const void *key1, const void *key2);
-    void (*keyDestructor)(void *privdata, void *key);
-    void (*valDestructor)(void *privdata, void *obj);
+    uint64_t (*hashFunction)(const void *key); // 计算key的hash值
+    void *(*keyDup)(void *privdata, const void *key); // 复制key
+    void *(*valDup)(void *privdata, const void *obj); // 复制value
+    int (*keyCompare)(void *privdata, const void *key1, const void *key2); // 比较key
+    void (*keyDestructor)(void *privdata, void *key); // 释放key
+    void (*valDestructor)(void *privdata, void *obj); // 释放value
 } dictType;
 
 /* This is our hash table structure. Every dictionary has two of this as we
  * implement incremental rehashing, for the old to the new table. */
+// hash表结构
+// 数组+链表
 typedef struct dictht {
-    dictEntry **table;
-    unsigned long size;
-    unsigned long sizemask;
-    unsigned long used;
+    dictEntry **table; // 桶数组，桶本身是个链表
+    unsigned long size; // 桶的容量（最大可存的桶个数；2的n次方），即"table"桶数组的容量
+    unsigned long sizemask; // 桶的容量掩码（size-1），用于计算桶在数组中的索引
+    unsigned long used; // 元素个数
 } dictht;
 
+// hash字典
 typedef struct dict {
-    dictType *type;
-    void *privdata;
-    dictht ht[2];
-    long rehashidx; /* rehashing not in progress if rehashidx == -1 */
-    unsigned long iterators; /* number of iterators currently running */
+    dictType *type; // 字典元素类型：指明复制和释放key、value的方法
+    void *privdata; // 自定义数据
+    dictht ht[2]; // 旧表+临时表。扩容时，迁移过程中需要用到两个字典：ht[0]：旧表，ht[1]临时表
+    long rehashidx; /*迁移进度（桶的索引） rehashing not in progress if rehashidx == -1 */
+    unsigned long iterators; /*正在迭代的迭代器数量 number of iterators currently running */
 } dict;
 
 /* If safe is set to 1 this is a safe iterator, that means, you can call
  * dictAdd, dictFind, and other functions against the dictionary even while
  * iterating. Otherwise it is a non safe iterator, and only dictNext()
  * should be called while iterating. */
+// 迭代器
+// safe为1，可以执行dictAdd、dictFind以及其他方法
+// safe为0，只能执行dictNext方法
 typedef struct dictIterator {
     dict *d;
-    long index;
+    long index; // 桶的索引
+    // table：指明当前迭代的是ht[0]还是ht[1]
     int table, safe;
     dictEntry *entry, *nextEntry;
     /* unsafe iterator fingerprint for misuse detection. */
+    // 对于不安全迭代器，记录迭代开始前字典的指纹信息，用来判断迭代期间是否执行了被禁止的操作
     long long fingerprint;
 } dictIterator;
 
+// 遍历字典
 typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
+
+// 遍历桶
 typedef void (dictScanBucketFunction)(void *privdata, dictEntry **bucketref);
 
 /* This is the initial size of every hash table */
